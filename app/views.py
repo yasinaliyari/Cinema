@@ -1,7 +1,6 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import render, get_object_or_404
-
-from app.models import Movie, Seat
+from app.models import Movie, Ticket, Seat
 
 
 def list_movies(request):
@@ -10,7 +9,10 @@ def list_movies(request):
 
 def list_seats(request, movie_id):
     movie = get_object_or_404(Movie, id=movie_id)
-    seats = Seat.objects.all()
+    reserved_seats = Ticket.objects.filter(movie=movie).values_list(
+        "seat_id", flat=True
+    )
+    seats = Seat.objects.exclude(id__in=reserved_seats)
 
     return render(request, "app/seats.html", {"movie": movie, "seats": seats})
 
