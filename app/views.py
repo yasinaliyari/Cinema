@@ -1,5 +1,7 @@
 from django.contrib.auth.forms import UserCreationForm
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+
 from app.models import Movie, Ticket, Seat
 
 
@@ -18,7 +20,17 @@ def list_seats(request, movie_id):
 
 
 def reserve_seat(request, movie_id, seat_id):
-    pass
+    if not request.user.is_authenticated:
+        login_url = reverse("login")
+        return redirect(f"{login_url}?next={request.path}")
+    movie = get_object_or_404(Movie, id=movie_id)
+    seat = get_object_or_404(Seat, id=seat_id)
+
+    ticket_exists = Ticket.objects.filter(movie=movie, seat=seat).exists()
+    if not ticket_exists:
+        Ticket.objects.create(movie=movie, seat=seat, user=request.user)
+
+    return redirect("list_seats", movie_id=movie.id)
 
 
 def stats(request):
