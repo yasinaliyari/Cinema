@@ -1,4 +1,6 @@
 from django.contrib.auth.forms import UserCreationForm
+from django.db.models import Count
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 
@@ -34,7 +36,16 @@ def reserve_seat(request, movie_id, seat_id):
 
 
 def stats(request):
-    pass
+    if not request.user.is_superuser:
+        return HttpResponseForbidden("Access Denied")
+
+    seat_stats = (
+        Ticket.objects.values("seat__number")
+        .annotate(total=Count("id"))
+        .order_by("seat__number")
+    )
+
+    return JsonResponse({"stats": list(seat_stats)})
 
 
 def signup(request):
